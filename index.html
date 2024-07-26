@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sushi Order Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Order Sushi</h1>
+        <div class="order-form">
+            <label for="sushiA">Sushi A (£3 each):</label>
+            <input type="number" id="sushiA" value="0" min="0">
+            
+            <label for="sushiB">Sushi B (£4 each):</label>
+            <input type="number" id="sushiB" value="0" min="0">
+            
+            <button onclick="calculateTotal()">Calculate Total</button>
+            <button onclick="placeOrder()">Place Order</button>
+        </div>
+        
+        <div class="total-display">
+            <p>Total Price Before Discount: £<span id="totalBeforeDiscount">0.00</span></p>
+            <p>Total Price After Discount: £<span id="totalAfterDiscount">0.00</span></p>
+        </div>
+    </div>
+    <script src="fornt_end1.js"></script>
+</body>
+</html>
