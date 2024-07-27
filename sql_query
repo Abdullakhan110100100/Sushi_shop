@@ -1,1 +1,9 @@
-CREATE TABLE orders ( order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique identifier for each order sushiA VARCHAR(50) NOT NULL, -- Name of the first sushi item sushiB VARCHAR(50) NOT NULL, -- Name of the second sushi item discount_applied FLOAT, -- Percentage discount applied (optional) total_discount DECIMAL(10,2), -- Total discount amount in currency final_price DECIMAL(10,2) NOT NULL, -- Final price of the order after discount order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP );
+CREATE TABLE orders (
+    order_id BIGINT NOT NULL PRIMARY KEY,
+    sushiA INT NOT NULL,
+    sushiB INT NOT NULL,
+    discount_applied FLOAT NOT NULL,
+    total_discount FLOAT NOT NULL,
+    final_price FLOAT NOT NULL,
+    order_date DATETIME NOT NULL
+);
