@@ -1,8 +1,10 @@
 
 async function fetchOrders() {
     try {
-        const response = await fetch('/fetch_orders');
+        const response = await fetch( 'http://127.0.0.1:5000/fetch_orders');
+        console.log('Idhar tak aya maa');
         const orders = await response.json();
+        console.log(orders);
         displayOrders(orders);
     } catch (error) {
         console.error('Error fetching orders:', error);
@@ -10,6 +12,7 @@ async function fetchOrders() {
 }
 
 function displayOrders(orders) {
+    console.log('Entered display orders', orders);
     const orderSummary = document.getElementById('orderSummary');
     orderSummary.innerHTML = '';
 
@@ -26,9 +29,9 @@ function displayOrders(orders) {
             <p>Order ID: ${order.order_id}</p>
             <p>Order Date: ${new Date(order.order_date).toLocaleString()}</p>
             ${itemsHTML}
-            <p>Discount Applied: £${order.discount_applied.toFixed(2)}</p>
-            <p>Total Discount: £${order.discount_applied.toFixed(2)}</p>
-            <p>Total Price: £${order.final_price.toFixed(2)}</p>
+            <p>Discount Applied: £${parseFloat(order.discount_applied).toFixed(2)}</p>
+            <p>Total Discount: £${parseFloat(order.discount_applied).toFixed(2)}</p>
+            <p>Total Price: £${parseFloat(order.final_price).toFixed(2)}</p>
         `;
 
         orderSummary.appendChild(orderDiv);
