@@ -39,8 +39,9 @@ async function placeOrder() {
         const data = await response.json();
         if (data.message === 'Order added successfully') {
             alert('Order placed successfully!');
+            order_id = data.order_id
             // Redirect to order summary page
-            window.location.href = '/orders.html';
+            window.location.href = 'C:\\Users\\rebel\\OneDrive\\Desktop\\abdulla\\web dev\\sushi project\\orders.html';
         }
     } catch (error) {
         console.error('Error placing order:', error);
