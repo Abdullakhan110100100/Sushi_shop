@@ -1,104 +1,15 @@
-# from flask import Flask, request, jsonify
-# from datetime import datetime
-# import mysql.connector
-
-# app = Flask(__name__)
-
-# # Database connection
-# def get_db_connection():
-#     return mysql.connector.connect(
-#         host='localhost',
-#         user='root',
-#         password='password',
-#         database='sushi_shop'
-#     )
-
-# # Calculate discount
-# def calculate_discount(quantity, order_time):
-#     discount = 0
-#     if quantity >= 20:
-#         discount = 0.20
-#     elif quantity >= 10:
-#         discount = 0.10
-
-#     if order_time.hour >= 11 and order_time.hour < 14:
-#         discount += 0.20
-
-#     return discount
-
-# # Add to cart endpoint
-# @app.route('/add_to_cart', methods=['POST'])
-# def add_to_cart():
-#     data = request.json
-#     sushi_a_quantity = data.get('sushiA', 0)
-#     sushi_b_quantity = data.get('sushiB', 0)
-#     order_time = datetime.now()
-
-#     sushi_a_price = 3 * sushi_a_quantity
-#     sushi_b_price = 4 * sushi_b_quantity
-#     total_price = sushi_a_price + sushi_b_price
-#     total_quantity = sushi_a_quantity + sushi_b_quantity
-
-#     discount_rate = calculate_discount(total_quantity, order_time)
-#     discount_applied = total_price * discount_rate
-#     final_price = total_price - discount_applied
-
-#     connection = get_db_connection()
-#     cursor = connection.cursor()
-
-#     # Insert order into database
-#     cursor.execute(
-#         "INSERT INTO orders (total_price, discount_applied, final_price) VALUES (%s, %s, %s)",
-#         (total_price, discount_applied, final_price)
-#     )
-#     order_id = cursor.lastrowid
-
-#     # Insert order items into database
-#     cursor.execute(
-#         "INSERT INTO order_items (order_id, sushi_type, quantity, price) VALUES (%s, %s, %s, %s)",
-#         (order_id, 'A', sushi_a_quantity, sushi_a_price)
-#     )
-#     cursor.execute(
-#         "INSERT INTO order_items (order_id, sushi_type, quantity, price) VALUES (%s, %s, %s, %s)",
-#         (order_id, 'B', sushi_b_quantity, sushi_b_price)
-#     )
-
-#     connection.commit()
-#     cursor.close()
-#     connection.close()
-
-#     return jsonify({'message': 'Order added successfully', 'order_id': order_id})
-
-# # Fetch orders endpoint
-# @app.route('/fetch_orders', methods=['GET'])
-# def fetch_orders():
-#     connection = get_db_connection()
-#     cursor = connection.cursor(dictionary=True)
-
-#     cursor.execute("SELECT * FROM orders")
-#     orders = cursor.fetchall()
-
-#     for order in orders:
-#         cursor.execute(
-#             "SELECT sushi_type, quantity, price FROM order_items WHERE order_id = %s", 
-#             (order['order_id'],)
-#         )
-#         order['items'] = cursor.fetchall()
-
-#     cursor.close()
-#     connection.close()
-
-#     return jsonify(orders)
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
 from flask import Flask, request, jsonify
 from datetime import datetime
 import mysql.connector
+import random
+
 
 app = Flask(__name__)
 from flask_cors import CORS
 CORS(app)
+
+
+order_id_global = 0
 
 # Database connection
 def get_db_connection():
@@ -110,9 +21,24 @@ def get_db_connection():
     )
     return conn
 
+def generate_unique_order_id():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    while True:
+        order_id = random.randint(1000000000, 9999999999)
+        cursor.execute("SELECT 1 FROM orders WHERE order_id = %s", (order_id,))
+        if cursor.fetchone() is None:
+            break
+
+    cursor.close()
+    conn.close()
+    return order_id
+
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
-    print('+++++++++++++++++++++++++++++Entered add to cart++++++++++++++++++++++++++++++++++++++++')
+    # print('+++++++++++++++++++++++++++++Entered add to cart++++++++++++++++++++++++++++++++++++++++')
+    global order_id_global
     data = request.json
     sushiA = data.get('sushiA')
     sushiB = data.get('sushiB')
@@ -133,27 +59,48 @@ def add_to_cart():
     if 11 <= current_hour < 14:
         discount_rate += 0.2
 
+    order_id = generate_unique_order_id()
+    
+    order_id_global = order_id
+
     total_discount = total_before_discount * discount_rate
     total_after_discount = total_before_discount - total_discount
 
     conn = get_db_connection()
+    
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO orders (sushiA, sushiB, discount_applied, total_discount, final_price, order_date) VALUES (%s, %s, %s, %s, %s, %s)",
-        (sushiA, sushiB, discount_rate, total_discount, total_after_discount, datetime.now())
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
+    
+    try:
+        # print((order_id,sushiA, sushiB, discount_rate, total_discount, total_after_discount, datetime.now() ))
+        cursor.execute(
+            "INSERT INTO new_orders (order_id,sushiA, sushiB, discount_applied, total_discount, final_price, order_date) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (order_id,sushiA, sushiB, discount_rate, total_discount, total_after_discount, datetime.now() )
+        )
+        conn.commit()
+        
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")  # Debug statement
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
 
-    return jsonify({"message": "Order added successfully"})
+    return jsonify({"message": "Order added successfully", "order_id": order_id})
 
 @app.route('/fetch_orders', methods=['GET'])
 def fetch_orders():
+    
     conn = get_db_connection()
+    
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM orders")
+    
+    cursor.execute(f"SELECT * FROM new_orders WHERE order_id = {order_id_global};")
+    
+
     orders = cursor.fetchall()
+    
+    if orders == []:
+        raise Exception('Order is empty')
     cursor.close()
     conn.close()
     
@@ -170,7 +117,7 @@ def fetch_orders():
             'final_price': order['final_price']
         }
         formatted_orders.append(formatted_order)
-
+    
     return jsonify(formatted_orders)
 
 @app.route('/test_db_connection', methods=['GET'])
